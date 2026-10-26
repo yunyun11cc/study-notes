@@ -828,7 +828,7 @@ Skill、Tool、Subagent 的区别：
 
 
 
-### 2.4Context Compact——上下文压缩
+### 2.4 Context Compact——上下文压缩
 
 当 Agent 执行了很多的操作之后，用户的输入、Agent 工具处理后的结果（tool_result）、模型的调用（assistant.content）都会放在 messages 中保存，这样会导致 messages 越来越大，最后会超过模型能接收的最大上下文长度。
 
@@ -857,3 +857,74 @@ messages[:] = COMPACTOR.prepare(messages, active_request)
 
 
 
+这里设置超限参数：
+
+````python
+CONTEXT_CHAR_LIMIT = 50000# 上下文字符限制
+TOOL_RESULT_BATCH_CHAR_LIMIT = 200000# 工具结果批次字符限制
+LARGE_RESULT_CHAR_LIMIT = 30000# 大型结果字符限制
+SUMMARY_INPUT_CHAR_LIMIT = 80000# 摘要输入字符限制
+KEEP_RECENT_RESULTS = 3# 保留最近的工具结果数量
+KEEP_RECENT_MESSAGES = 5# 保留最近的消息数量
+````
+
+
+
+#### 1.tool_result_budget
+
+每次只对==工具结果==进行压缩处理，每次压缩前统计工具结果的总字符是否超过`TOOL_RESULT_BATCH_CHAR_LIMIT` = 200000
+
+检查最后一条消息是否是agent的结果，如果不是也不进行这一部分的压缩。
+
+对最后一条消息内部的所有==工具结果==的字符数从大到小排序，从大的部分开始处理，超限值`LARGE_RESULT_CHAR_LIMIT` = 30000
+
+，当结果的字符数超过该值时，将这一部分对应的`content`保存到本地文件中，文件名为：`tool_use_id.txt`
+
+最后将已经被压缩的该结果的 `content`改为：
+
+````Python
+f"<persisted-output>\nFull output: {path}\n" //压缩的持久化路径
+
+f"Preview:\n{preview}\n</persisted-output>"  //前几个字符的预览
+````
+
+每压缩完一条工具结果就检查总字符数是否超限，用最少的操作来完成压缩的阈值。
+
+
+
+#### 2.snip_compact
+
+直接对消息进行裁剪，保留消息的头尾部分，中间直接裁剪然后保存到本地，并进行归档标记。
+
+设置一个最大的消息条数`max_messages`，超过则出发裁剪压缩。被裁剪区间的消息中，首尾不可是工具的结果，如果是，则向中间收窄裁剪的区间。
+
+**注**：在保留的首尾消息中，对于 `tool_use`和 `tool_result`要进行 id 匹配以进行成对保存，不可以破坏工具使用和结果的顺序。如果这个条件不满足，即使总消息条数超过了`max_messages`也不进行裁剪。
+
+最后裁剪完的消息样式：
+
+````Python
+[*messages[:head_end], marker, *messages[tail_start:]]
+marker = {"role": "user", "content":
+					f"[{tail_start - head_end} messages archived at {transcript_path}]"} # 归档标记，还有归档后的路径
+````
+
+
+
+#### 3.micro_compact
+
+1. 首先创建一个索引表 result，里面保存着 每条消息的索引，以及这条消息里面的每个块的索引和内容
+2. 找到最新的一次模型响应，然后对该次模型响应后面的内容做一个索引提取 unseen，这部分是模型还没响应过的内容
+3. 从 result 中去除 unseen 对应索引的内容作为consumed，之前的内容都是模型已经响应过的内容
+4. 对 consumed[:-3] 遍历（再保留最后 3 条消息），当总字符数超过设置的阈值，并且对应块的内容长度超过 120 的时候看是否已经被持久化保存过了，没有的话则进行持久化保存压缩，然后在压缩后的块内容中表明路径：`Earlier tool result saved at {saved_path}`
+
+
+
+| `fit_tool_results` | 压**所有**结果，包括最新的 | 路径 + 1000 字预览（温和些） | micro 之后还是太长   |
+| ------------------ | -------------------------- | ---------------------------- | -------------------- |
+| `compact_history`  | 整段历史                   | 让 LLM 写成摘要              | 前面都不够，最后手段 |
+
+> 暂时没有细致的了解，只有大体
+
+
+
+### 2.5 Memory —— 记忆管理
