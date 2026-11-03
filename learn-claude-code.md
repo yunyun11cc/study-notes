@@ -137,7 +137,7 @@ block[1] = {
 
 最后我们维护的`messages`会变成下面的样子：
 
-````python
+````json
 messages = [
     # 1. 用户提出任务
     {
