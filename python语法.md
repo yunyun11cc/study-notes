@@ -24,7 +24,7 @@
 
 list.sort(key)->None：
 
-sort是list的方法之一，只能对列表使用，sort对列表进行原地排序，返回的是排序完以后的列表
+sort是list的方法之一，只能对列表使用，sort对列表进行原地排序，最后返回None
 
 
 
@@ -35,7 +35,11 @@ sorted(iterable , key=lamda:... , reverse:False)->list
 
 
 
+两者的key和reverse都相同
 
+- **原列表可以改、且只关心排序结果** → 用 `list.sort()`（省内存，尤其大列表）。
+- **不想动原数据 / 对象不是 list / 需要链式使用返回值** → 用 `sorted()`。
+- **永远不要写 `x = list.sort()`**，要写 `x = sorted(list)` 或 `list.sort()` 后直接用 `list`。
 
 
 

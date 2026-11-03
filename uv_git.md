@@ -93,6 +93,9 @@ git init
 
 # 克隆远程仓库到本地
 git clone <远程仓库地址>
+
+# 绑定远程仓库
+git remote add origin <你的仓库URL>
 ```
 
 ### 2. 日常提交与状态查看
