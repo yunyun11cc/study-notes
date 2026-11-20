@@ -25,7 +25,7 @@ class Solution:
             visited.append(curr.val)
             curr=curr.next
         visited.sort()
-
+        
         curr=head
         for i in range(len(visited)): 
             curr.val=visited[i] # 直接原地修改原链表的值
