@@ -105,3 +105,35 @@ d.pop(key, None)            # 不存在 → 返回 None，不报错
 del d[key]                  # 不存在 → KeyError
 ````
 
+
+
+
+
+# 双端队列
+
+## 基础操作
+
+````python
+from collections import deque
+
+# 1. 传入多个元素（列表、元组、range 均可）
+q1 = deque([1, 2, 3])        # deque([1, 2, 3])
+q2 = deque((10, 20))         # deque([10, 20])
+q3 = deque(range(4))         # deque([0, 1, 2, 3])
+
+# 2. 字符串的常见坑：字符串本身是可迭代对象！
+q4 = deque("abc")            # deque(['a', 'b', 'c']) -> 会被拆成单个字符
+q5 = deque(["abc"])          # deque(['abc'])         -> 想存整个字符串必须套中括号
+
+# 3. 定长队列 maxlen（做滑动窗口、日志缓冲、历史记录极好用）
+q6 = deque([1, 2, 3], maxlen=3)
+q6.append(4)                 # 队列已满，自动从左侧挤掉 1 -> deque([2, 3, 4])
+q6.appendleft(0)             # 从左侧塞入，自动从右侧挤掉 4 -> deque([0, 2, 3])
+````
+
+
+
+### 写题时最容易踩的 2 个坑
+
+1. **初始化漏掉中括号**： `deque()` 的参数必须是一个**可迭代对象**。如果你直接写 `q = deque(root)`，会立刻报错 `TypeError: 'TreeNode' object is not iterable`。必须写成 `q = deque([root])`，或者先建空队列再 `q.append(root)`。
+2. **手滑写成 `q.pop()`**： `deque` 是双端队列，右侧也能弹出。`q.pop()` 弹出的是队尾元素（后进先出，直接退化成栈/DFS 了），写 BFS 队列时一定要盯紧写 **`q.popleft()`**。
