@@ -1,15 +1,17 @@
-
-
 """
-给定一个二叉树, 找到该树中两个指定节点的最近公共祖先。
+给定二叉树的根节点 root，以及树中两个不同的节点 p 和 q，返回它们的最近公共祖先。
+最近公共祖先是同时为 p 和 q 的祖先且深度最大的节点。节点可以是自己的祖先。
 
-百度百科中最近公共祖先的定义为：“对于有根树 T 的两个节点 p、q，最近公共祖先表示为一个节点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。
-
-
-输入：root = [3,5,1,6,2,0,8,null,null,7,4], p = 5, q = 1
+示例 1
+输入：root = [3, 5, 1, 6, 2, 0, 8, null, null, 7, 4], p = 5, q = 1
 输出：3
-解释：节点 5 和节点 1 的最近公共祖先是节点 3 。
+
+示例 2
+输入：root = [3, 5, 1, 6, 2, 0, 8, null, null, 7, 4], p = 5, q = 4
+输出：5
+解释：节点 5 本身就是节点 4 的祖先。
 """
+
 
 # Definition for a binary tree node.
 class TreeNode:
@@ -18,32 +20,30 @@ class TreeNode:
         self.left = None
         self.right = None
 
-# 利用后序遍历的特性，去左右子树找p和q，最后回到当前节点汇总，看看当前节点是不是要的那个答案
-# 用ans来存最后节点的位置，给一个整数变量count，每当遇到p和q就加1，当count为2的时候就尝试去填入ans，前提是ans不为空
-# 这里第一个填入ans的就是我们要打节点，因为递归自底向上的特性，第一个符合要求的节点深度一定最深
+
+# 1. 后序遍历，分别统计左右子树里出现了几个目标节点。
+# 2. 当前节点是 p 或 q 时再加 1，得到当前整棵子树的命中数。
+# 3. 第一次汇总出 2 个目标的节点就是最近公共祖先，记录后继续向上返回命中数。
 
 
 class Solution:
     def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
-        self.ans=None
-        
+        self.ans = None
+
         def dfs(node):
             if node is None:
                 return 0
-            
-            left_count=dfs(node.left,count)
-            right_count=dfs(node.right,count)
-            
-            if node==p or node==q:
-                count+=1
 
-            if count+left_count+right_count==2 and self.ans==None:
-                self.ans=node
-            
-            return count+left_count+right_count
+            left_count = dfs(node.left)
+            right_count = dfs(node.right)
+            count = int(node is p or node is q)
+            total = count + left_count + right_count
+
+            # 后序遍历中第一个包含两个目标的节点深度最大。
+            if total == 2 and self.ans is None:
+                self.ans = node
+
+            return total
 
         dfs(root)
-            
         return self.ans
-        
-        

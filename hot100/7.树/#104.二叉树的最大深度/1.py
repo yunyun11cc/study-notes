@@ -1,10 +1,14 @@
 """
-给定一个二叉树 root ，返回其最大深度。
+给定二叉树的根节点 root，返回树的最大深度，也就是从根到最远叶子经过的节点数。
+空树的深度为 0。
 
-二叉树的 最大深度 是指从根节点到最远叶子节点的最长路径上的节点数。
-
-输入：root = [3,9,20,null,null,15,7]
+示例 1
+输入：root = [3, 9, 20, null, null, 15, 7]
 输出：3
+
+示例 2
+输入：root = [1, null, 2]
+输出：2
 """
 
 
@@ -14,19 +18,19 @@ class TreeNode:
         self.val = val
         self.left = left
         self.right = right
-        
-# 对于当前遍历的结点，左右子树中更高的那一颗的高度加上1（结点本身的高度）
-# 后序遍历的思路：先求左右子树更高的高度，然后回到当前结点加1
-# 递归完以后回到root就是当前树的最大深度
+
+
+# 1. 空节点的深度为 0，直接返回。
+# 2. 用后序递归得到左右子树的最大深度。
+# 3. 取较大的子树深度加 1，把当前节点也算进去。
+
 
 class Solution:
     def maxDepth(self, root: TreeNode | None) -> int:
         if root is None:
             return 0 # 空结点没有高度，递归终止条件
-        
+
         left_depth=self.maxDepth(root.left) # 左子树的最大深度
         right_depth=self.maxDepth(root.right) # 右子树的最大深度
-        
+
         return 1+max(left_depth,right_depth)
-    
-    
